@@ -56,7 +56,7 @@
 
     <h2>断面（直交3方向）</h2>
     <div id="clips"></div>
-    <p class="sub" style="margin-top:6px;">※ 切断面のキャップ（塗りつぶし）は未実装のため、断面は中空に見えます。</p>
+    <label class="chk" style="margin-top:6px;"><input type="checkbox" id="cbCaps" checked> 切断面を構造色で塗る（キャップ）</label>
 
     <h2>表示</h2>
     <label class="chk"><input type="checkbox" id="cbGrid" checked> グリッド（10mm 間隔）</label>
@@ -111,6 +111,8 @@ const dir2 = new THREE.DirectionalLight(0xffffff, 0.5); dir2.position.set(-1,-0.
 
 const root = new THREE.Group(); scene.add(root);   // model container
 const helpers = new THREE.Group(); scene.add(helpers);
+const capGroup = new THREE.Group(); scene.add(capGroup);   // section caps
+let capsEnabled = true;
 
 // clipping planes (world axes). normal points to the KEPT half.
 const planes = {
@@ -119,7 +121,70 @@ const planes = {
   axi:{ plane:new THREE.Plane(new THREE.Vector3(0,0,-1), 0), on:false, axis:'z' }, // 水平 (z)
 };
 function activePlanes(){ return Object.values(planes).filter(p=>p.on).map(p=>p.plane); }
-function refreshClip(){ const a=activePlanes(); renderer.clippingPlanes=a; }
+
+// Per-material local clipping (NOT global) so cap stencil passes can exclude
+// their own plane. Main meshes are clipped by ALL active planes.
+function refreshClip(){
+  const act = activePlanes();
+  Object.values(meshes).forEach(m=> m.material.clippingPlanes = act);
+  renderer.clippingPlanes = [];
+  buildCaps(act);
+}
+
+// ---------------- section caps (per-structure independent stencil passes) ----
+function bboxVol(m){ const b=new THREE.Box3().setFromObject(m); const s=b.getSize(new THREE.Vector3()); return s.x*s.y*s.z; }
+function disposeGroup(g){ g.children.slice().forEach(c=>{ if(c.geometry&&c.geometry!==sharedCapGeo) c.geometry.dispose?.(); c.material?.dispose?.(); g.remove(c); }); }
+let sharedCapGeo=null, capQuads=[];
+
+function stencilMesh(m, plane, side, op, ro){
+  const mat = new THREE.MeshBasicMaterial();
+  mat.depthWrite=false; mat.depthTest=false; mat.colorWrite=false;
+  mat.stencilWrite=true; mat.stencilFunc=THREE.AlwaysStencilFunc;
+  mat.side=side; mat.clippingPlanes=[plane];
+  mat.stencilFail=op; mat.stencilZFail=op; mat.stencilZPass=op;
+  const sm=new THREE.Mesh(m.geometry, mat);
+  sm.matrixAutoUpdate=false; sm.matrix.copy(m.matrixWorld);
+  sm.renderOrder=ro; return sm;
+}
+function orientCap(pm, plane){
+  const n=plane.normal;
+  const d=n.dot(center)+plane.constant;
+  pm.position.copy(center).addScaledVector(n,-d);       // closest plane point to model center
+  pm.quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1), n);
+}
+function capPlaneMesh(plane, others, col, ro, depthLayer){
+  if(!sharedCapGeo) sharedCapGeo=new THREE.PlaneGeometry(1,1);
+  const mat=new THREE.MeshBasicMaterial({ color:col, side:THREE.DoubleSide,
+    clippingPlanes:others,
+    stencilWrite:true, stencilRef:0, stencilFunc:THREE.NotEqualStencilFunc,
+    stencilFail:THREE.ReplaceStencilOp, stencilZFail:THREE.ReplaceStencilOp, stencilZPass:THREE.ReplaceStencilOp,
+    polygonOffset:true, polygonOffsetFactor:-1-depthLayer, polygonOffsetUnits:-1-depthLayer });
+  const pm=new THREE.Mesh(sharedCapGeo, mat);
+  const s=radius*2.6; pm.scale.set(s,s,1);
+  pm.renderOrder=ro; pm.userData.plane=plane;
+  pm.onAfterRender=()=>renderer.clearStencil();   // isolate each structure's stencil
+  orientCap(pm, plane);
+  return pm;
+}
+function buildCaps(act){
+  disposeGroup(capGroup); capQuads=[];
+  if(!capsEnabled || act.length===0) return;
+  scene.updateMatrixWorld(true);
+  const vis=Object.values(meshes).filter(m=>m.visible);
+  vis.sort((a,b)=> bboxVol(b)-bboxVol(a));          // outer -> inner
+  let ro=10;
+  act.forEach(P=>{
+    const others=act.filter(p=>p!==P);
+    vis.forEach((m,i)=>{
+      capGroup.add(stencilMesh(m,P,THREE.BackSide, THREE.IncrementWrapStencilOp, ro));
+      capGroup.add(stencilMesh(m,P,THREE.FrontSide,THREE.DecrementWrapStencilOp, ro));
+      const cap=capPlaneMesh(P, others, m.userData.baseColor, ro+1, i);
+      capGroup.add(cap); capQuads.push(cap);
+      ro+=2;
+    });
+  });
+}
+function updateCapPositions(){ capQuads.forEach(pm=>orientCap(pm, pm.userData.plane)); }
 
 let structures = {}, meta = {}, meshes = {}, bbox = new THREE.Box3(), center = new THREE.Vector3(), radius=150;
 
@@ -167,7 +232,7 @@ function buildTree(){
     const wrap=document.createElement('div'); wrap.className='cat';
     const head=document.createElement('div'); head.className='cat-head';
     const cb=document.createElement('input'); cb.type='checkbox'; cb.checked=true;
-    cb.onchange=()=>{ byCat[cat].forEach(n=>{ meshes[n].visible=cb.checked; const r=document.getElementById('vis_'+n); if(r) r.checked=cb.checked; }); };
+    cb.onchange=()=>{ byCat[cat].forEach(n=>{ meshes[n].visible=cb.checked; const r=document.getElementById('vis_'+n); if(r) r.checked=cb.checked; }); buildCaps(activePlanes()); };
     const lab=document.createElement('span'); lab.textContent=CATLABEL[cat]||cat;
     head.appendChild(cb); head.appendChild(lab); wrap.appendChild(head);
     byCat[cat].forEach(n=>{
@@ -175,7 +240,7 @@ function buildTree(){
       const row=document.createElement('div'); row.className='row';
       const sw=document.createElement('span'); sw.className='sw'; sw.style.background='rgb('+cfg.color.join(',')+')';
       const vis=document.createElement('input'); vis.type='checkbox'; vis.checked=true; vis.id='vis_'+n; vis.title='表示/非表示';
-      vis.onchange=()=>{ meshes[n].visible=vis.checked; };
+      vis.onchange=()=>{ meshes[n].visible=vis.checked; buildCaps(activePlanes()); };
       const label=document.createElement('label'); label.textContent=cfg.name_ja; label.title=cfg.name_en;
       label.onclick=()=>selectMesh(meshes[n]);
       const op=document.createElement('input'); op.type='range'; op.min=0; op.max=1; op.step=0.05; op.value=1; op.title='不透明度';
@@ -220,7 +285,7 @@ function buildClips(){
       P.plane.setFromNormalAndCoplanarPoint(n, new THREE.Vector3(ax==='x'?v:center.x, ax==='y'?v:center.y, ax==='z'?v:center.z));
     }
     cb.onchange=()=>{ P.on=cb.checked; sl.disabled=!cb.checked; apply(); refreshClip(); };
-    sl.oninput=()=>{ apply(); refreshClip(); };
+    sl.oninput=()=>{ apply(); updateCapPositions(); };   // cheap: just move cap quads
     flip.onclick=()=>{ P.plane.normal.multiplyScalar(-1); apply(); refreshClip(); };
     wrap.append(cb,lab,sl,flip); el.appendChild(wrap);
   });
@@ -274,6 +339,7 @@ document.getElementById('btnXray').onclick=()=>{
   ['Cortex_L','Cortex_R'].forEach(n=>{ if(meshes[n]){ meshes[n].material.opacity=0.15; const r=document.querySelectorAll('#tree .row'); } });
 };
 document.getElementById('btnReset').onclick=()=>setView('front');
+document.getElementById('cbCaps').onchange=e=>{ capsEnabled=e.target.checked; buildCaps(activePlanes()); };
 document.getElementById('cbGrid').onchange=e=>{ if(grid) grid.visible=e.target.checked; };
 document.getElementById('cbLabels').onchange=e=>{ if(labelR){labelR.visible=labelL.visible=e.target.checked;} };
 document.getElementById('btnPng').onclick=()=>{
