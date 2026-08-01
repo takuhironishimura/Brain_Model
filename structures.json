@@ -1,0 +1,617 @@
+{
+  "meta": {
+    "template": "fsaverage (FreeSurfer average brain)",
+    "deep_source": "fsaverage/mri/aseg.mgz",
+    "cortex_source": "fsaverage/surf/{lh,rh}.pial",
+    "coordinate_space": "FreeSurfer surface RAS (tkrRAS); x>0 = RIGHT",
+    "marching_cubes_level": 0.5,
+    "note": "Average-brain model. Volumes are recorded as measured and are NOT corrected. Do not use for quantitative volumetry or clinical purposes. See README known-limitations.",
+    "included_in_glb": [
+      "Cortex_L",
+      "Cortex_R",
+      "Thalamus_L",
+      "Thalamus_R",
+      "Caudate_L",
+      "Caudate_R",
+      "Putamen_L",
+      "Putamen_R",
+      "Pallidum_L",
+      "Pallidum_R",
+      "Hippocampus_L",
+      "Hippocampus_R",
+      "Amygdala_L",
+      "Amygdala_R",
+      "Accumbens_L",
+      "Accumbens_R",
+      "Cerebellum_L",
+      "Cerebellum_R",
+      "BrainStem",
+      "VentralDC_L",
+      "VentralDC_R",
+      "LateralVentricle_L",
+      "LateralVentricle_R",
+      "ThirdVentricle",
+      "FourthVentricle"
+    ]
+  },
+  "structures": {
+    "Cortex_L": {
+      "name_en": "Cerebral Cortex (Left)",
+      "name_ja": "大脳皮質（左）",
+      "category": "cortex",
+      "source": "surface:lh.pial",
+      "faces": 60000,
+      "surface_area_mm2": 76432.9,
+      "centroid_mm": [
+        -29.1,
+        -18.8,
+        14.8
+      ],
+      "volume_mm3_measured": null,
+      "reference_range_mm3": null,
+      "reference_source": null,
+      "pct_diff_vs_reference": null,
+      "color": [
+        205,
+        195,
+        180
+      ]
+    },
+    "Cortex_R": {
+      "name_en": "Cerebral Cortex (Right)",
+      "name_ja": "大脳皮質（右）",
+      "category": "cortex",
+      "source": "surface:rh.pial",
+      "faces": 60000,
+      "surface_area_mm2": 76360.9,
+      "centroid_mm": [
+        29.7,
+        -17.8,
+        14.5
+      ],
+      "volume_mm3_measured": null,
+      "reference_range_mm3": null,
+      "reference_source": null,
+      "pct_diff_vs_reference": null,
+      "color": [
+        205,
+        195,
+        180
+      ]
+    },
+    "Thalamus_L": {
+      "name_en": "Thalamus (Left)",
+      "name_ja": "視床（左）",
+      "category": "subcortical",
+      "source": "aseg:10",
+      "faces": 5000,
+      "volume_mm3_measured": 8610.0,
+      "reference_range_mm3": [
+        6000,
+        8000
+      ],
+      "reference_source": "Representative adult normative ranges from manual-tracing MRI studies; see README references. Values here are FreeSurfer aseg outputs on the fsaverage average brain and run systematically larger than manual tracing (boundary-definition difference).",
+      "pct_diff_vs_reference": 23.0,
+      "centroid_mm": [
+        -11.9,
+        -19.9,
+        4.7
+      ],
+      "color": [
+        196,
+        122,
+        88
+      ]
+    },
+    "Thalamus_R": {
+      "name_en": "Thalamus (Right)",
+      "name_ja": "視床（右）",
+      "category": "subcortical",
+      "source": "aseg:49",
+      "faces": 5000,
+      "volume_mm3_measured": 8589.0,
+      "reference_range_mm3": [
+        6000,
+        8000
+      ],
+      "reference_source": "Representative adult normative ranges from manual-tracing MRI studies; see README references. Values here are FreeSurfer aseg outputs on the fsaverage average brain and run systematically larger than manual tracing (boundary-definition difference).",
+      "pct_diff_vs_reference": 22.7,
+      "centroid_mm": [
+        12.5,
+        -19.3,
+        5.3
+      ],
+      "color": [
+        196,
+        122,
+        88
+      ]
+    },
+    "Caudate_L": {
+      "name_en": "Caudate (Left)",
+      "name_ja": "尾状核（左）",
+      "category": "subcortical",
+      "source": "aseg:11",
+      "faces": 5000,
+      "volume_mm3_measured": 3627.0,
+      "reference_range_mm3": [
+        3000,
+        4000
+      ],
+      "reference_source": "Representative adult normative ranges from manual-tracing MRI studies; see README references. Values here are FreeSurfer aseg outputs on the fsaverage average brain and run systematically larger than manual tracing (boundary-definition difference).",
+      "pct_diff_vs_reference": 3.6,
+      "centroid_mm": [
+        -15.2,
+        7.6,
+        7.7
+      ],
+      "color": [
+        132,
+        158,
+        190
+      ]
+    },
+    "Caudate_R": {
+      "name_en": "Caudate (Right)",
+      "name_ja": "尾状核（右）",
+      "category": "subcortical",
+      "source": "aseg:50",
+      "faces": 5000,
+      "volume_mm3_measured": 3852.0,
+      "reference_range_mm3": [
+        3000,
+        4000
+      ],
+      "reference_source": "Representative adult normative ranges from manual-tracing MRI studies; see README references. Values here are FreeSurfer aseg outputs on the fsaverage average brain and run systematically larger than manual tracing (boundary-definition difference).",
+      "pct_diff_vs_reference": 10.1,
+      "centroid_mm": [
+        16.4,
+        7.4,
+        9.2
+      ],
+      "color": [
+        132,
+        158,
+        190
+      ]
+    },
+    "Putamen_L": {
+      "name_en": "Putamen (Left)",
+      "name_ja": "被殻（左）",
+      "category": "subcortical",
+      "source": "aseg:12",
+      "faces": 5000,
+      "volume_mm3_measured": 7242.0,
+      "reference_range_mm3": [
+        4000,
+        5500
+      ],
+      "reference_source": "Representative adult normative ranges from manual-tracing MRI studies; see README references. Values here are FreeSurfer aseg outputs on the fsaverage average brain and run systematically larger than manual tracing (boundary-definition difference).",
+      "pct_diff_vs_reference": 52.5,
+      "centroid_mm": [
+        -26.2,
+        -1.0,
+        -2.2
+      ],
+      "color": [
+        150,
+        120,
+        175
+      ]
+    },
+    "Putamen_R": {
+      "name_en": "Putamen (Right)",
+      "name_ja": "被殻（右）",
+      "category": "subcortical",
+      "source": "aseg:51",
+      "faces": 5000,
+      "volume_mm3_measured": 6872.0,
+      "reference_range_mm3": [
+        4000,
+        5500
+      ],
+      "reference_source": "Representative adult normative ranges from manual-tracing MRI studies; see README references. Values here are FreeSurfer aseg outputs on the fsaverage average brain and run systematically larger than manual tracing (boundary-definition difference).",
+      "pct_diff_vs_reference": 44.7,
+      "centroid_mm": [
+        26.8,
+        -0.4,
+        -2.3
+      ],
+      "color": [
+        150,
+        120,
+        175
+      ]
+    },
+    "Pallidum_L": {
+      "name_en": "Pallidum (Left)",
+      "name_ja": "淡蒼球（左）",
+      "category": "subcortical",
+      "source": "aseg:13",
+      "faces": 2776,
+      "volume_mm3_measured": 1765.0,
+      "reference_range_mm3": [
+        1500,
+        2200
+      ],
+      "reference_source": "Representative adult normative ranges from manual-tracing MRI studies; see README references. Values here are FreeSurfer aseg outputs on the fsaverage average brain and run systematically larger than manual tracing (boundary-definition difference).",
+      "pct_diff_vs_reference": -4.6,
+      "centroid_mm": [
+        -21.0,
+        -5.5,
+        -2.4
+      ],
+      "color": [
+        120,
+        145,
+        120
+      ]
+    },
+    "Pallidum_R": {
+      "name_en": "Pallidum (Right)",
+      "name_ja": "淡蒼球（右）",
+      "category": "subcortical",
+      "source": "aseg:52",
+      "faces": 2792,
+      "volume_mm3_measured": 1804.0,
+      "reference_range_mm3": [
+        1500,
+        2200
+      ],
+      "reference_source": "Representative adult normative ranges from manual-tracing MRI studies; see README references. Values here are FreeSurfer aseg outputs on the fsaverage average brain and run systematically larger than manual tracing (boundary-definition difference).",
+      "pct_diff_vs_reference": -2.5,
+      "centroid_mm": [
+        22.2,
+        -5.2,
+        -2.0
+      ],
+      "color": [
+        120,
+        145,
+        120
+      ]
+    },
+    "Hippocampus_L": {
+      "name_en": "Hippocampus (Left)",
+      "name_ja": "海馬（左）",
+      "category": "subcortical",
+      "source": "aseg:17",
+      "faces": 5000,
+      "volume_mm3_measured": 5165.0,
+      "reference_range_mm3": [
+        3000,
+        4500
+      ],
+      "reference_source": "Representative adult normative ranges from manual-tracing MRI studies; see README references. Values here are FreeSurfer aseg outputs on the fsaverage average brain and run systematically larger than manual tracing (boundary-definition difference).",
+      "pct_diff_vs_reference": 37.7,
+      "centroid_mm": [
+        -25.2,
+        -25.4,
+        -14.2
+      ],
+      "color": [
+        90,
+        160,
+        120
+      ]
+    },
+    "Hippocampus_R": {
+      "name_en": "Hippocampus (Right)",
+      "name_ja": "海馬（右）",
+      "category": "subcortical",
+      "source": "aseg:53",
+      "faces": 5000,
+      "volume_mm3_measured": 5387.0,
+      "reference_range_mm3": [
+        3000,
+        4500
+      ],
+      "reference_source": "Representative adult normative ranges from manual-tracing MRI studies; see README references. Values here are FreeSurfer aseg outputs on the fsaverage average brain and run systematically larger than manual tracing (boundary-definition difference).",
+      "pct_diff_vs_reference": 43.7,
+      "centroid_mm": [
+        26.9,
+        -24.6,
+        -13.9
+      ],
+      "color": [
+        90,
+        160,
+        120
+      ]
+    },
+    "Amygdala_L": {
+      "name_en": "Amygdala (Left)",
+      "name_ja": "扁桃体（左）",
+      "category": "subcortical",
+      "source": "aseg:18",
+      "faces": 2856,
+      "volume_mm3_measured": 1941.0,
+      "reference_range_mm3": [
+        1200,
+        1900
+      ],
+      "reference_source": "Representative adult normative ranges from manual-tracing MRI studies; see README references. Values here are FreeSurfer aseg outputs on the fsaverage average brain and run systematically larger than manual tracing (boundary-definition difference).",
+      "pct_diff_vs_reference": 25.2,
+      "centroid_mm": [
+        -23.9,
+        -7.6,
+        -20.6
+      ],
+      "color": [
+        210,
+        170,
+        90
+      ]
+    },
+    "Amygdala_R": {
+      "name_en": "Amygdala (Right)",
+      "name_ja": "扁桃体（右）",
+      "category": "subcortical",
+      "source": "aseg:54",
+      "faces": 3132,
+      "volume_mm3_measured": 2228.0,
+      "reference_range_mm3": [
+        1200,
+        1900
+      ],
+      "reference_source": "Representative adult normative ranges from manual-tracing MRI studies; see README references. Values here are FreeSurfer aseg outputs on the fsaverage average brain and run systematically larger than manual tracing (boundary-definition difference).",
+      "pct_diff_vs_reference": 43.7,
+      "centroid_mm": [
+        25.0,
+        -6.3,
+        -20.6
+      ],
+      "color": [
+        210,
+        170,
+        90
+      ]
+    },
+    "Accumbens_L": {
+      "name_en": "Accumbens (Left)",
+      "name_ja": "側坐核（左）",
+      "category": "subcortical",
+      "source": "aseg:26",
+      "faces": 1712,
+      "volume_mm3_measured": 778.0,
+      "reference_range_mm3": [
+        400,
+        700
+      ],
+      "reference_source": "Representative adult normative ranges from manual-tracing MRI studies; see README references. Values here are FreeSurfer aseg outputs on the fsaverage average brain and run systematically larger than manual tracing (boundary-definition difference).",
+      "pct_diff_vs_reference": 41.5,
+      "centroid_mm": [
+        -9.5,
+        10.8,
+        -8.5
+      ],
+      "color": [
+        200,
+        140,
+        150
+      ]
+    },
+    "Accumbens_R": {
+      "name_en": "Accumbens (Right)",
+      "name_ja": "側坐核（右）",
+      "category": "subcortical",
+      "source": "aseg:58",
+      "faces": 1672,
+      "volume_mm3_measured": 757.0,
+      "reference_range_mm3": [
+        400,
+        700
+      ],
+      "reference_source": "Representative adult normative ranges from manual-tracing MRI studies; see README references. Values here are FreeSurfer aseg outputs on the fsaverage average brain and run systematically larger than manual tracing (boundary-definition difference).",
+      "pct_diff_vs_reference": 37.6,
+      "centroid_mm": [
+        9.9,
+        10.5,
+        -8.5
+      ],
+      "color": [
+        200,
+        140,
+        150
+      ]
+    },
+    "Cerebellum_L": {
+      "name_en": "Cerebellum (Left)",
+      "name_ja": "小脳（左）",
+      "category": "cerebellum",
+      "source": "aseg:8+7",
+      "faces": 22000,
+      "volume_mm3_measured": 77618.0,
+      "reference_range_mm3": [
+        55000,
+        75000
+      ],
+      "reference_source": "Representative adult normative ranges from manual-tracing MRI studies; see README references. Values here are FreeSurfer aseg outputs on the fsaverage average brain and run systematically larger than manual tracing (boundary-definition difference).",
+      "pct_diff_vs_reference": 19.4,
+      "centroid_mm": [
+        -20.5,
+        -61.1,
+        -36.4
+      ],
+      "color": [
+        170,
+        150,
+        190
+      ]
+    },
+    "Cerebellum_R": {
+      "name_en": "Cerebellum (Right)",
+      "name_ja": "小脳（右）",
+      "category": "cerebellum",
+      "source": "aseg:47+46",
+      "faces": 22000,
+      "volume_mm3_measured": 77851.0,
+      "reference_range_mm3": [
+        55000,
+        75000
+      ],
+      "reference_source": "Representative adult normative ranges from manual-tracing MRI studies; see README references. Values here are FreeSurfer aseg outputs on the fsaverage average brain and run systematically larger than manual tracing (boundary-definition difference).",
+      "pct_diff_vs_reference": 19.8,
+      "centroid_mm": [
+        21.8,
+        -61.3,
+        -35.8
+      ],
+      "color": [
+        170,
+        150,
+        190
+      ]
+    },
+    "BrainStem": {
+      "name_en": "Brainstem",
+      "name_ja": "脳幹",
+      "category": "brainstem",
+      "source": "aseg:16",
+      "faces": 8000,
+      "volume_mm3_measured": 26629.0,
+      "reference_range_mm3": [
+        20000,
+        35000
+      ],
+      "reference_source": "Representative adult normative ranges from manual-tracing MRI studies; see README references. Values here are FreeSurfer aseg outputs on the fsaverage average brain and run systematically larger than manual tracing (boundary-definition difference).",
+      "pct_diff_vs_reference": -3.2,
+      "centroid_mm": [
+        0.8,
+        -33.0,
+        -31.2
+      ],
+      "color": [
+        180,
+        130,
+        110
+      ]
+    },
+    "VentralDC_L": {
+      "name_en": "Ventral Diencephalon (Left)",
+      "name_ja": "腹側間脳（左）",
+      "category": "brainstem",
+      "source": "aseg:28",
+      "faces": 6000,
+      "volume_mm3_measured": 5142.0,
+      "reference_range_mm3": null,
+      "reference_source": null,
+      "pct_diff_vs_reference": null,
+      "centroid_mm": [
+        -12.5,
+        -17.0,
+        -10.0
+      ],
+      "color": [
+        160,
+        140,
+        120
+      ]
+    },
+    "VentralDC_R": {
+      "name_en": "Ventral Diencephalon (Right)",
+      "name_ja": "腹側間脳（右）",
+      "category": "brainstem",
+      "source": "aseg:60",
+      "faces": 6000,
+      "volume_mm3_measured": 5076.0,
+      "reference_range_mm3": null,
+      "reference_source": null,
+      "pct_diff_vs_reference": null,
+      "centroid_mm": [
+        13.6,
+        -16.3,
+        -9.7
+      ],
+      "color": [
+        160,
+        140,
+        120
+      ]
+    },
+    "LateralVentricle_L": {
+      "name_en": "Lateral Ventricle (Left)",
+      "name_ja": "側脳室（左）",
+      "category": "ventricle",
+      "source": "aseg:4+5",
+      "faces": 12000,
+      "volume_mm3_measured": 22020.0,
+      "reference_range_mm3": null,
+      "reference_source": null,
+      "pct_diff_vs_reference": null,
+      "centroid_mm": [
+        -16.4,
+        -14.2,
+        10.5
+      ],
+      "color": [
+        110,
+        170,
+        200
+      ]
+    },
+    "LateralVentricle_R": {
+      "name_en": "Lateral Ventricle (Right)",
+      "name_ja": "側脳室（右）",
+      "category": "ventricle",
+      "source": "aseg:43+44",
+      "faces": 12000,
+      "volume_mm3_measured": 20176.0,
+      "reference_range_mm3": null,
+      "reference_source": null,
+      "pct_diff_vs_reference": null,
+      "centroid_mm": [
+        17.0,
+        -13.0,
+        10.9
+      ],
+      "color": [
+        110,
+        170,
+        200
+      ]
+    },
+    "ThirdVentricle": {
+      "name_en": "Third Ventricle",
+      "name_ja": "第三脳室",
+      "category": "ventricle",
+      "source": "aseg:14",
+      "faces": 3244,
+      "volume_mm3_measured": 1941.0,
+      "reference_range_mm3": null,
+      "reference_source": null,
+      "pct_diff_vs_reference": null,
+      "centroid_mm": [
+        0.6,
+        -11.3,
+        -3.8
+      ],
+      "color": [
+        100,
+        180,
+        210
+      ]
+    },
+    "FourthVentricle": {
+      "name_en": "Fourth Ventricle",
+      "name_ja": "第四脳室",
+      "category": "ventricle",
+      "source": "aseg:15",
+      "faces": 3752,
+      "volume_mm3_measured": 2237.0,
+      "reference_range_mm3": null,
+      "reference_source": null,
+      "pct_diff_vs_reference": null,
+      "centroid_mm": [
+        0.6,
+        -46.5,
+        -33.2
+      ],
+      "color": [
+        100,
+        180,
+        210
+      ]
+    }
+  }
+}

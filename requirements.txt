@@ -1,0 +1,14 @@
+fast-simplification==0.1.13
+matplotlib==3.11.1
+mne==1.12.1
+networkx==3.6.1
+nibabel==5.4.2
+nilearn==0.14.0
+numpy==2.5.1
+pandas==3.0.5
+pillow==12.3.0
+pooch==1.9.0
+scikit-image==0.26.0
+scikit-learn==1.8.0
+scipy==1.18.0
+trimesh==5.0.0

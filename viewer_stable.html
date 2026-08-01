@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>脳3Dビューア / Brain 3D Viewer</title>
+<style>
+  :root { --bg:#1a1c1f; --panel:#232629; --line:#3a3f44; --txt:#e7e9ec; --muted:#9aa2ab; --accent:#5b9bd5; }
+  * { box-sizing:border-box; }
+  html,body { margin:0; height:100%; font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Hiragino Sans","Noto Sans JP",sans-serif; background:var(--bg); color:var(--txt); overflow:hidden; }
+  #app { display:flex; height:100vh; }
+  #panel { width:300px; min-width:300px; background:var(--panel); border-right:1px solid var(--line); overflow-y:auto; padding:12px; }
+  #view { position:relative; flex:1; }
+  canvas { display:block; }
+  h1 { font-size:15px; margin:0 0 8px; }
+  h2 { font-size:12px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); margin:16px 0 6px; border-bottom:1px solid var(--line); padding-bottom:4px; }
+  .sub { font-size:11px; color:var(--muted); margin:0 0 10px; line-height:1.4; }
+  .cat { margin-bottom:6px; }
+  .cat > .cat-head { display:flex; align-items:center; gap:6px; font-weight:600; font-size:13px; padding:3px 0; }
+  .row { display:flex; align-items:center; gap:6px; padding:2px 0 2px 18px; font-size:12px; }
+  .row .sw { width:11px; height:11px; border-radius:2px; flex:none; }
+  .row label { flex:1; cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .row input[type=range] { width:66px; }
+  input[type=range] { accent-color:var(--accent); }
+  button { background:#2d3237; color:var(--txt); border:1px solid var(--line); border-radius:5px; padding:5px 8px; font-size:12px; cursor:pointer; }
+  button:hover { background:#363c42; }
+  .btns { display:grid; grid-template-columns:1fr 1fr 1fr; gap:5px; }
+  .btns.two { grid-template-columns:1fr 1fr; }
+  .clip { display:flex; align-items:center; gap:6px; font-size:12px; margin:4px 0; }
+  .clip input[type=range] { flex:1; }
+  .clip .cb { width:auto; }
+  #info { position:absolute; top:10px; right:10px; width:230px; background:rgba(30,33,37,.92); border:1px solid var(--line); border-radius:7px; padding:10px 12px; font-size:12px; line-height:1.5; display:none; }
+  #info .t { font-weight:600; font-size:13px; }
+  #info .ja { color:var(--muted); }
+  #info .k { color:var(--muted); }
+  #hud { position:absolute; left:10px; bottom:10px; font-size:11px; color:var(--muted); background:rgba(30,33,37,.75); padding:4px 8px; border-radius:5px; }
+  #loading { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:14px; }
+  .foot { font-size:10px; color:var(--muted); margin-top:14px; line-height:1.4; }
+  .chk { display:flex; align-items:center; gap:6px; font-size:12px; margin:5px 0; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="panel">
+    <h1>脳3Dビューア</h1>
+    <p class="sub">fsaverage 平均脳（研究・教育用）。<b>診断・定量計測不可</b>。座標 x&gt;0 = 被験者の右。</p>
+
+    <h2>プリセットビュー</h2>
+    <div class="btns" id="views"></div>
+    <div class="chk" style="margin-top:8px;">
+      <button id="btnXray" style="width:100%">皮質を半透明にして深部を見る</button>
+    </div>
+
+    <h2>構造</h2>
+    <div id="tree"></div>
+
+    <h2>断面（直交3方向）</h2>
+    <div id="clips"></div>
+    <p class="sub" style="margin-top:6px;">※ 切断面のキャップ（塗りつぶし）は未実装のため、断面は中空に見えます。</p>
+
+    <h2>表示</h2>
+    <label class="chk"><input type="checkbox" id="cbGrid" checked> グリッド（10mm 間隔）</label>
+    <label class="chk"><input type="checkbox" id="cbLabels" checked> L / R ラベル</label>
+    <label class="chk"><input type="checkbox" id="cbTransparentPng"> PNG 背景を透過</label>
+    <div class="btns two" style="margin-top:6px;">
+      <button id="btnReset">視点リセット</button>
+      <button id="btnPng">PNG 書き出し</button>
+    </div>
+
+    <p class="foot">Three.js r160 / GLTF。色は解剖書調・色覚に配慮し名称併記。<br>データ: fsaverage aseg + pial（FreeSurfer）。</p>
+  </div>
+  <div id="view">
+    <div id="info"></div>
+    <div id="hud"></div>
+    <div id="loading">読み込み中… (ローカルHTTPサーバ経由で開いてください)</div>
+  </div>
+</div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+}}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+const CATLABEL = { cortex:'皮質 Cortex', subcortical:'皮質下 Subcortical',
+  cerebellum:'小脳 Cerebellum', brainstem:'脳幹 Brainstem', ventricle:'脳室 Ventricle' };
+const CATORDER = ['cortex','subcortical','cerebellum','brainstem','ventricle'];
+
+const view = document.getElementById('view');
+const renderer = new THREE.WebGLRenderer({ antialias:true, preserveDrawingBuffer:true, alpha:true });
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(view.clientWidth, view.clientHeight);
+renderer.localClippingEnabled = true;
+view.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x1a1c1f);
+const camera = new THREE.PerspectiveCamera(35, view.clientWidth/view.clientHeight, 1, 4000);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+
+scene.add(new THREE.HemisphereLight(0xffffff, 0x33383d, 1.15));
+const dir = new THREE.DirectionalLight(0xffffff, 1.0); dir.position.set(1,1,1); scene.add(dir);
+const dir2 = new THREE.DirectionalLight(0xffffff, 0.5); dir2.position.set(-1,-0.5,-1); scene.add(dir2);
+
+const root = new THREE.Group(); scene.add(root);   // model container
+const helpers = new THREE.Group(); scene.add(helpers);
+
+// clipping planes (world axes). normal points to the KEPT half.
+const planes = {
+  sag:{ plane:new THREE.Plane(new THREE.Vector3(-1,0,0), 0), on:false, axis:'x' }, // 矢状 (x)
+  cor:{ plane:new THREE.Plane(new THREE.Vector3(0,-1,0), 0), on:false, axis:'y' }, // 冠状 (y)
+  axi:{ plane:new THREE.Plane(new THREE.Vector3(0,0,-1), 0), on:false, axis:'z' }, // 水平 (z)
+};
+function activePlanes(){ return Object.values(planes).filter(p=>p.on).map(p=>p.plane); }
+function refreshClip(){ const a=activePlanes(); renderer.clippingPlanes=a; }
+
+let structures = {}, meta = {}, meshes = {}, bbox = new THREE.Box3(), center = new THREE.Vector3(), radius=150;
+
+function toColor(rgb){ return new THREE.Color(rgb[0]/255, rgb[1]/255, rgb[2]/255); }
+
+Promise.all([
+  fetch('structures.json').then(r=>r.json()),
+  new Promise((res,rej)=> new GLTFLoader().load('brain.glb', res, undefined, rej))
+]).then(([sj, gltf])=>{
+  structures = sj.structures; meta = sj.meta || {};
+  gltf.scene.traverse(o=>{
+    if(o.isMesh){
+      const name = o.name;
+      if(!o.geometry.getAttribute('normal')) o.geometry.computeVertexNormals();
+      const cfg = structures[name] || { name_en:name, name_ja:name, category:'subcortical', color:[180,180,180] };
+      const mat = new THREE.MeshStandardMaterial({
+        color: toColor(cfg.color), roughness:0.85, metalness:0.0,
+        transparent:true, opacity:1.0, side:THREE.DoubleSide,
+        clipShadows:true, emissive:new THREE.Color(0x000000)
+      });
+      o.material = mat;
+      o.userData.cfg = cfg; o.userData.name = name; o.userData.baseColor = toColor(cfg.color);
+      meshes[name] = o;
+    }
+  });
+  root.add(gltf.scene);
+  bbox.setFromObject(root); bbox.getCenter(center);
+  radius = bbox.getSize(new THREE.Vector3()).length()/2;
+  controls.target.copy(center);
+  buildTree(); buildViews(); buildClips(); buildHelpers();
+  setView('front');
+  document.getElementById('loading').style.display='none';
+  updateHud();
+}).catch(err=>{
+  document.getElementById('loading').textContent = '読み込み失敗: '+err+' — `python -m http.server` で配信して開いてください。';
+  console.error(err);
+});
+
+// ---------------- structure tree
+function buildTree(){
+  const tree = document.getElementById('tree'); tree.innerHTML='';
+  const byCat = {};
+  Object.keys(structures).forEach(n=>{ if(!meshes[n]) return; const c=structures[n].category||'subcortical'; (byCat[c]=byCat[c]||[]).push(n); });
+  CATORDER.filter(c=>byCat[c]).forEach(cat=>{
+    const wrap=document.createElement('div'); wrap.className='cat';
+    const head=document.createElement('div'); head.className='cat-head';
+    const cb=document.createElement('input'); cb.type='checkbox'; cb.checked=true;
+    cb.onchange=()=>{ byCat[cat].forEach(n=>{ meshes[n].visible=cb.checked; const r=document.getElementById('vis_'+n); if(r) r.checked=cb.checked; }); };
+    const lab=document.createElement('span'); lab.textContent=CATLABEL[cat]||cat;
+    head.appendChild(cb); head.appendChild(lab); wrap.appendChild(head);
+    byCat[cat].forEach(n=>{
+      const cfg=structures[n];
+      const row=document.createElement('div'); row.className='row';
+      const sw=document.createElement('span'); sw.className='sw'; sw.style.background='rgb('+cfg.color.join(',')+')';
+      const vis=document.createElement('input'); vis.type='checkbox'; vis.checked=true; vis.id='vis_'+n; vis.title='表示/非表示';
+      vis.onchange=()=>{ meshes[n].visible=vis.checked; };
+      const label=document.createElement('label'); label.textContent=cfg.name_ja; label.title=cfg.name_en;
+      label.onclick=()=>selectMesh(meshes[n]);
+      const op=document.createElement('input'); op.type='range'; op.min=0; op.max=1; op.step=0.05; op.value=1; op.title='不透明度';
+      op.oninput=()=>{ meshes[n].material.opacity=parseFloat(op.value); };
+      row.append(sw,vis,label,op); wrap.appendChild(row);
+    });
+    tree.appendChild(wrap);
+  });
+}
+
+// ---------------- preset views
+const VIEWS = { front:'前', back:'後', left:'左', right:'右', top:'上', bottom:'下' };
+function buildViews(){
+  const el=document.getElementById('views'); el.innerHTML='';
+  Object.entries(VIEWS).forEach(([k,jp])=>{ const b=document.createElement('button'); b.textContent=jp; b.title=k; b.onclick=()=>setView(k); el.appendChild(b); });
+}
+function setView(kind){
+  const d = radius*3.2; const c=center;
+  const pos={ front:[0,d,0], back:[0,-d,0], left:[-d,0,0], right:[d,0,0], top:[0,0,d], bottom:[0,0,-d] }[kind];
+  const up = (kind==='top')?[0,1,0]:(kind==='bottom')?[0,-1,0]:[0,0,1];
+  camera.up.set(...up);
+  camera.position.set(c.x+pos[0], c.y+pos[1], c.z+pos[2]);
+  controls.target.copy(c); controls.update();
+}
+
+// ---------------- clipping UI
+function buildClips(){
+  const el=document.getElementById('clips'); el.innerHTML='';
+  const defs=[['sag','矢状断 (L-R)','x'],['cor','冠状断 (A-P)','y'],['axi','水平断 (S-I)','z']];
+  const min={x:bbox.min.x,y:bbox.min.y,z:bbox.min.z}, max={x:bbox.max.x,y:bbox.max.y,z:bbox.max.z};
+  defs.forEach(([key,name,ax])=>{
+    const P=planes[key];
+    const wrap=document.createElement('div'); wrap.className='clip';
+    const cb=document.createElement('input'); cb.type='checkbox'; cb.className='cb';
+    const lab=document.createElement('span'); lab.textContent=name; lab.style.minWidth='92px'; lab.style.fontSize='11px';
+    const sl=document.createElement('input'); sl.type='range'; sl.min=min[ax]; sl.max=max[ax]; sl.step=1; sl.value=center[ax]; sl.disabled=true;
+    const flip=document.createElement('button'); flip.textContent='⇄'; flip.title='方向反転'; flip.style.padding='2px 6px';
+    function apply(){ // plane normal * (-value) => constant; keep side per normal sign
+      const v=parseFloat(sl.value); const n=P.plane.normal;
+      P.plane.constant = -(n.x*v*(ax==='x') + n.y*v*(ax==='y') + n.z*v*(ax==='z'));
+      // simpler: set from point
+      P.plane.setFromNormalAndCoplanarPoint(n, new THREE.Vector3(ax==='x'?v:center.x, ax==='y'?v:center.y, ax==='z'?v:center.z));
+    }
+    cb.onchange=()=>{ P.on=cb.checked; sl.disabled=!cb.checked; apply(); refreshClip(); };
+    sl.oninput=()=>{ apply(); refreshClip(); };
+    flip.onclick=()=>{ P.plane.normal.multiplyScalar(-1); apply(); refreshClip(); };
+    wrap.append(cb,lab,sl,flip); el.appendChild(wrap);
+  });
+}
+
+// ---------------- helpers: grid + L/R labels
+let grid, labelR, labelL;
+function makeLabel(text, color){
+  const c=document.createElement('canvas'); c.width=c.height=128; const g=c.getContext('2d');
+  g.fillStyle=color; g.font='bold 96px sans-serif'; g.textAlign='center'; g.textBaseline='middle';
+  g.fillText(text,64,68);
+  const tex=new THREE.CanvasTexture(c); const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tex, depthTest:false}));
+  sp.scale.set(22,22,1); return sp;
+}
+function buildHelpers(){
+  const size = Math.ceil(radius*2/10)*10*2; // mm, multiple of 10
+  grid = new THREE.GridHelper(size, size/10, 0x556070, 0x333a42);
+  grid.position.set(center.x, bbox.min.y-2, center.z); // note: default grid is XZ plane at y
+  helpers.add(grid);
+  // L/R labels anchored to WORLD x (x>0 = subject RIGHT) => correctness guaranteed
+  labelR = makeLabel('R', '#e2606a'); labelR.position.set(bbox.max.x+16, center.y, center.z); helpers.add(labelR);
+  labelL = makeLabel('L', '#5b9bd5'); labelL.position.set(bbox.min.x-16, center.y, center.z); helpers.add(labelL);
+}
+
+// ---------------- selection (raycast)
+const ray=new THREE.Raycaster(); const mouse=new THREE.Vector2(); let selected=null;
+renderer.domElement.addEventListener('click', ev=>{
+  const r=renderer.domElement.getBoundingClientRect();
+  mouse.x=((ev.clientX-r.left)/r.width)*2-1; mouse.y=-((ev.clientY-r.top)/r.height)*2+1;
+  ray.setFromCamera(mouse,camera);
+  const hits=ray.intersectObjects(Object.values(meshes).filter(m=>m.visible), false);
+  if(hits.length) selectMesh(hits[0].object); else clearSelect();
+});
+function selectMesh(m){
+  clearSelect(); selected=m;
+  m.material.emissive.setHex(0x445566); m.material.emissiveIntensity=1.0;
+  const c=m.userData.cfg;
+  const vol = (c.volume_mm3_measured!=null) ? (Math.round(c.volume_mm3_measured).toLocaleString()+' mm³') :
+              (c.surface_area_mm2!=null ? ('表面積 '+Math.round(c.surface_area_mm2).toLocaleString()+' mm²') : '—');
+  let ref='';
+  if(c.reference_range_mm3){ ref=`<div class="k">参照 ${c.reference_range_mm3[0]}–${c.reference_range_mm3[1]} mm³（差 ${c.pct_diff_vs_reference>0?'+':''}${c.pct_diff_vs_reference}%）</div>`; }
+  const info=document.getElementById('info'); info.style.display='block';
+  info.innerHTML=`<div class="t">${c.name_en}</div><div class="ja">${c.name_ja}</div>`+
+    `<div class="k">分類: ${CATLABEL[c.category]||c.category}</div>`+
+    `<div>体積: ${vol}</div>`+ref;
+}
+function clearSelect(){ if(selected){ selected.material.emissive.setHex(0x000000); selected=null; } document.getElementById('info').style.display='none'; }
+
+// ---------------- buttons
+document.getElementById('btnXray').onclick=()=>{
+  ['Cortex_L','Cortex_R'].forEach(n=>{ if(meshes[n]){ meshes[n].material.opacity=0.15; const r=document.querySelectorAll('#tree .row'); } });
+};
+document.getElementById('btnReset').onclick=()=>setView('front');
+document.getElementById('cbGrid').onchange=e=>{ if(grid) grid.visible=e.target.checked; };
+document.getElementById('cbLabels').onchange=e=>{ if(labelR){labelR.visible=labelL.visible=e.target.checked;} };
+document.getElementById('btnPng').onclick=()=>{
+  const transparent=document.getElementById('cbTransparentPng').checked;
+  const oldBg=scene.background; if(transparent){ scene.background=null; renderer.setClearColor(0x000000,0); }
+  const gv=grid?grid.visible:false; // keep as-is
+  renderer.render(scene,camera);
+  const url=renderer.domElement.toDataURL('image/png');
+  scene.background=oldBg; if(transparent) renderer.setClearColor(0x000000,1);
+  const a=document.createElement('a'); a.href=url; a.download='brain_view.png'; a.click();
+};
+
+function updateHud(){
+  const nStruct=Object.keys(meshes).length;
+  const sz=bbox.getSize(new THREE.Vector3());
+  document.getElementById('hud').textContent=
+    `構造 ${nStruct} / 寸法 L-R ${sz.x.toFixed(0)}mm · A-P ${sz.y.toFixed(0)}mm · S-I ${sz.z.toFixed(0)}mm`;
+}
+
+addEventListener('resize', ()=>{ camera.aspect=view.clientWidth/view.clientHeight; camera.updateProjectionMatrix(); renderer.setSize(view.clientWidth,view.clientHeight); });
+(function loop(){ requestAnimationFrame(loop); controls.update(); renderer.render(scene,camera); })();
+window.__ready = ()=>document.getElementById('loading').style.display==='none';
+</script>
+</body>
+</html>
