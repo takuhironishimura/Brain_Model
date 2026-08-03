@@ -1,4 +1,21 @@
+# Python environment / caches
 .venv/
 __pycache__/
 *.pyc
+
+# OS
+.DS_Store
+
+# Neuroimaging download caches (only if ever placed inside the project;
+# by default these live under ~/mne_data and ~/nilearn_data)
+nilearn_data/
+mne_data/
+fsaverage/
+*.mgz
+*.mgh
+
+# Intermediate / non-deliverable artifacts (kept on disk, not tracked)
 interp_out.txt
+*.png
+brain_minimal.glb
+build_minimal.py
