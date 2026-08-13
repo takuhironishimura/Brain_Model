@@ -42,37 +42,40 @@
 <body>
 <div id="app">
   <div id="panel">
-    <h1>脳3Dビューア</h1>
-    <p class="sub">fsaverage 平均脳（研究・教育用）。<b>診断・定量計測不可</b>。座標 x&gt;0 = 被験者の右。</p>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+      <h1 data-i18n="title">脳3Dビューア</h1>
+      <button id="btnLang" title="日本語 / English" style="padding:3px 9px;font-size:11px;flex:none;">EN</button>
+    </div>
+    <p class="sub" data-i18n-html="sub">fsaverage 平均脳（研究・教育用）。<b>診断・定量計測不可</b>。座標 x&gt;0 = 被験者の右。</p>
 
-    <h2>プリセットビュー</h2>
+    <h2 data-i18n="presets">プリセットビュー</h2>
     <div class="btns" id="views"></div>
     <div class="chk" style="margin-top:8px;">
-      <button id="btnXray" style="width:100%">皮質を半透明にして深部を見る</button>
+      <button id="btnXray" data-i18n="xray" style="width:100%">皮質を半透明にして深部を見る</button>
     </div>
 
-    <h2>構造</h2>
+    <h2 data-i18n="structures">構造</h2>
     <div id="tree"></div>
 
-    <h2>断面（直交3方向）</h2>
+    <h2 data-i18n="sections">断面（直交3方向）</h2>
     <div id="clips"></div>
-    <label class="chk" style="margin-top:6px;"><input type="checkbox" id="cbCaps" checked> 切断面を構造色で塗る（キャップ）</label>
+    <label class="chk" style="margin-top:6px;"><input type="checkbox" id="cbCaps" checked> <span data-i18n="caps">切断面を構造色で塗る（キャップ）</span></label>
 
-    <h2>表示</h2>
-    <label class="chk"><input type="checkbox" id="cbGrid" checked> グリッド（10mm 間隔）</label>
-    <label class="chk"><input type="checkbox" id="cbLabels" checked> L / R ラベル</label>
-    <label class="chk"><input type="checkbox" id="cbTransparentPng"> PNG 背景を透過</label>
+    <h2 data-i18n="display">表示</h2>
+    <label class="chk"><input type="checkbox" id="cbGrid" checked> <span data-i18n="grid">グリッド（10mm 間隔）</span></label>
+    <label class="chk"><input type="checkbox" id="cbLabels" checked> <span data-i18n="lrlabels">L / R ラベル</span></label>
+    <label class="chk"><input type="checkbox" id="cbTransparentPng"> <span data-i18n="pngAlpha">PNG 背景を透過</span></label>
     <div class="btns two" style="margin-top:6px;">
-      <button id="btnReset">視点リセット</button>
-      <button id="btnPng">PNG 書き出し</button>
+      <button id="btnReset" data-i18n="reset">視点リセット</button>
+      <button id="btnPng" data-i18n="png">PNG 書き出し</button>
     </div>
 
-    <p class="foot">Three.js r160 / GLTF。色は解剖書調・色覚に配慮し名称併記。<br>データ: fsaverage aseg + pial（FreeSurfer）。</p>
+    <p class="foot" data-i18n-html="foot">Three.js r160 / GLTF。色は解剖書調・色覚に配慮し名称併記。<br>データ: fsaverage aseg + pial（FreeSurfer）。</p>
   </div>
   <div id="view">
     <div id="info"></div>
     <div id="hud"></div>
-    <div id="loading">読み込み中… (ローカルHTTPサーバ経由で開いてください)</div>
+    <div id="loading" data-i18n="loading">読み込み中… (ローカルHTTPサーバ経由で開いてください)</div>
   </div>
 </div>
 
@@ -88,9 +91,61 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-const CATLABEL = { cortex:'皮質 Cortex', subcortical:'皮質下 Subcortical',
-  cerebellum:'小脳 Cerebellum', brainstem:'脳幹 Brainstem', ventricle:'脳室 Ventricle' };
+// ---------------- i18n (JA / EN toggle) ----------------
+let LANG = 'ja';
+const T = {
+  ja:{
+    title:'脳3Dビューア',
+    sub:'fsaverage 平均脳（研究・教育用）。<b>診断・定量計測不可</b>。座標 x&gt;0 = 被験者の右。',
+    presets:'プリセットビュー', xray:'皮質を半透明にして深部を見る',
+    structures:'構造', sections:'断面（直交3方向）',
+    caps:'切断面を構造色で塗る（キャップ）', display:'表示',
+    grid:'グリッド（10mm 間隔）', lrlabels:'L / R ラベル', pngAlpha:'PNG 背景を透過',
+    reset:'視点リセット', png:'PNG 書き出し',
+    foot:'Three.js r160 / GLTF。色は解剖書調・色覚に配慮し名称併記。<br>データ: fsaverage aseg + pial（FreeSurfer）。',
+    loading:'読み込み中… (ローカルHTTPサーバ経由で開いてください)',
+    loadFail:'読み込み失敗: ', loadFailTail:' — `python -m http.server` で配信して開いてください。',
+    views:{front:'前',back:'後',left:'左',right:'右',top:'上',bottom:'下'},
+    clips:{sag:'矢状断 (L-R)',cor:'冠状断 (A-P)',axi:'水平断 (S-I)'}, flip:'方向反転',
+    visToggle:'表示/非表示', opacity:'不透明度',
+    cat:{cortex:'皮質',subcortical:'皮質下',cerebellum:'小脳',brainstem:'脳幹',ventricle:'脳室'},
+    category:'分類', volume:'体積', area:'表面積', ref:'参照', diff:'差',
+    hudStruct:'構造', hudDims:'寸法',
+  },
+  en:{
+    title:'Brain 3D Viewer',
+    sub:"fsaverage average brain (research / education). <b>Not for diagnosis or quantitative measurement</b>. Coordinates: x&gt;0 = subject's RIGHT.",
+    presets:'Preset views', xray:'Make cortex translucent to see deep structures',
+    structures:'Structures', sections:'Sections (3 orthogonal)',
+    caps:'Fill cut faces with structure color (caps)', display:'Display',
+    grid:'Grid (10 mm spacing)', lrlabels:'L / R labels', pngAlpha:'Transparent PNG background',
+    reset:'Reset view', png:'Export PNG',
+    foot:'Three.js r160 / GLTF. Muted anatomical palette, color-blind aware with names shown.<br>Data: fsaverage aseg + pial (FreeSurfer).',
+    loading:'Loading… (open via a local HTTP server)',
+    loadFail:'Load failed: ', loadFailTail:' — serve it with `python -m http.server` and open the URL.',
+    views:{front:'Front',back:'Back',left:'Left',right:'Right',top:'Top',bottom:'Bottom'},
+    clips:{sag:'Sagittal (L-R)',cor:'Coronal (A-P)',axi:'Axial (S-I)'}, flip:'Flip direction',
+    visToggle:'Show / hide', opacity:'Opacity',
+    cat:{cortex:'Cortex',subcortical:'Subcortical',cerebellum:'Cerebellum',brainstem:'Brainstem',ventricle:'Ventricle'},
+    category:'Category', volume:'Volume', area:'Surface area', ref:'Ref', diff:'diff',
+    hudStruct:'Structures', hudDims:'Dims',
+  }
+};
 const CATORDER = ['cortex','subcortical','cerebellum','brainstem','ventricle'];
+function tr(k){ return T[LANG][k]; }
+function catLabel(cat){ return T[LANG].cat[cat] || cat; }
+function structName(cfg){ return LANG==='ja' ? cfg.name_ja : cfg.name_en; }
+function structAlt(cfg){ return LANG==='ja' ? cfg.name_en : cfg.name_ja; }
+function applyI18n(){
+  document.documentElement.lang = LANG;
+  document.querySelectorAll('[data-i18n]').forEach(el=>{ el.textContent = tr(el.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-html]').forEach(el=>{ el.innerHTML = tr(el.dataset.i18nHtml); });
+  document.getElementById('btnLang').textContent = LANG==='ja' ? 'EN' : '日本語';
+  if(Object.keys(meshes).length){   // rebuild dynamic UI (state preserved from meshes[]/planes[])
+    buildViews(); buildClips(); buildTree(); updateHud();
+    if(selected) selectMesh(selected);
+  }
+}
 
 const view = document.getElementById('view');
 const renderer = new THREE.WebGLRenderer({ antialias:true, preserveDrawingBuffer:true, alpha:true });
@@ -218,8 +273,9 @@ Promise.all([
   setView('front');
   document.getElementById('loading').style.display='none';
   updateHud();
+  applyI18n();   // sync all text to current language (sets toggle button label too)
 }).catch(err=>{
-  document.getElementById('loading').textContent = '読み込み失敗: '+err+' — `python -m http.server` で配信して開いてください。';
+  document.getElementById('loading').textContent = tr('loadFail')+err+tr('loadFailTail');
   console.error(err);
 });
 
@@ -231,19 +287,19 @@ function buildTree(){
   CATORDER.filter(c=>byCat[c]).forEach(cat=>{
     const wrap=document.createElement('div'); wrap.className='cat';
     const head=document.createElement('div'); head.className='cat-head';
-    const cb=document.createElement('input'); cb.type='checkbox'; cb.checked=true;
+    const cb=document.createElement('input'); cb.type='checkbox'; cb.checked=byCat[cat].every(n=>meshes[n].visible);
     cb.onchange=()=>{ byCat[cat].forEach(n=>{ meshes[n].visible=cb.checked; const r=document.getElementById('vis_'+n); if(r) r.checked=cb.checked; }); buildCaps(activePlanes()); };
-    const lab=document.createElement('span'); lab.textContent=CATLABEL[cat]||cat;
+    const lab=document.createElement('span'); lab.textContent=catLabel(cat);
     head.appendChild(cb); head.appendChild(lab); wrap.appendChild(head);
     byCat[cat].forEach(n=>{
       const cfg=structures[n];
       const row=document.createElement('div'); row.className='row';
       const sw=document.createElement('span'); sw.className='sw'; sw.style.background='rgb('+cfg.color.join(',')+')';
-      const vis=document.createElement('input'); vis.type='checkbox'; vis.checked=true; vis.id='vis_'+n; vis.title='表示/非表示';
+      const vis=document.createElement('input'); vis.type='checkbox'; vis.checked=meshes[n].visible; vis.id='vis_'+n; vis.title=tr('visToggle');
       vis.onchange=()=>{ meshes[n].visible=vis.checked; buildCaps(activePlanes()); };
-      const label=document.createElement('label'); label.textContent=cfg.name_ja; label.title=cfg.name_en;
+      const label=document.createElement('label'); label.textContent=structName(cfg); label.title=structAlt(cfg);
       label.onclick=()=>selectMesh(meshes[n]);
-      const op=document.createElement('input'); op.type='range'; op.min=0; op.max=1; op.step=0.05; op.value=1; op.title='不透明度';
+      const op=document.createElement('input'); op.type='range'; op.min=0; op.max=1; op.step=0.05; op.value=meshes[n].material.opacity; op.title=tr('opacity');
       op.oninput=()=>{ meshes[n].material.opacity=parseFloat(op.value); };
       row.append(sw,vis,label,op); wrap.appendChild(row);
     });
@@ -252,10 +308,10 @@ function buildTree(){
 }
 
 // ---------------- preset views
-const VIEWS = { front:'前', back:'後', left:'左', right:'右', top:'上', bottom:'下' };
+const VIEWKEYS = ['front','back','left','right','top','bottom'];
 function buildViews(){
   const el=document.getElementById('views'); el.innerHTML='';
-  Object.entries(VIEWS).forEach(([k,jp])=>{ const b=document.createElement('button'); b.textContent=jp; b.title=k; b.onclick=()=>setView(k); el.appendChild(b); });
+  VIEWKEYS.forEach(k=>{ const b=document.createElement('button'); b.textContent=T[LANG].views[k]; b.title=k; b.onclick=()=>setView(k); el.appendChild(b); });
 }
 function setView(kind){
   const d = radius*3.2; const c=center;
@@ -269,19 +325,18 @@ function setView(kind){
 // ---------------- clipping UI
 function buildClips(){
   const el=document.getElementById('clips'); el.innerHTML='';
-  const defs=[['sag','矢状断 (L-R)','x'],['cor','冠状断 (A-P)','y'],['axi','水平断 (S-I)','z']];
+  const defs=[['sag','x'],['cor','y'],['axi','z']];
   const min={x:bbox.min.x,y:bbox.min.y,z:bbox.min.z}, max={x:bbox.max.x,y:bbox.max.y,z:bbox.max.z};
-  defs.forEach(([key,name,ax])=>{
+  defs.forEach(([key,ax])=>{
     const P=planes[key];
+    if(P.value===undefined) P.value=center[ax];               // persist position across rebuilds
     const wrap=document.createElement('div'); wrap.className='clip';
-    const cb=document.createElement('input'); cb.type='checkbox'; cb.className='cb';
-    const lab=document.createElement('span'); lab.textContent=name; lab.style.minWidth='92px'; lab.style.fontSize='11px';
-    const sl=document.createElement('input'); sl.type='range'; sl.min=min[ax]; sl.max=max[ax]; sl.step=1; sl.value=center[ax]; sl.disabled=true;
-    const flip=document.createElement('button'); flip.textContent='⇄'; flip.title='方向反転'; flip.style.padding='2px 6px';
-    function apply(){ // plane normal * (-value) => constant; keep side per normal sign
-      const v=parseFloat(sl.value); const n=P.plane.normal;
-      P.plane.constant = -(n.x*v*(ax==='x') + n.y*v*(ax==='y') + n.z*v*(ax==='z'));
-      // simpler: set from point
+    const cb=document.createElement('input'); cb.type='checkbox'; cb.className='cb'; cb.checked=P.on;
+    const lab=document.createElement('span'); lab.textContent=T[LANG].clips[key]; lab.style.minWidth='92px'; lab.style.fontSize='11px';
+    const sl=document.createElement('input'); sl.type='range'; sl.min=min[ax]; sl.max=max[ax]; sl.step=1; sl.value=P.value; sl.disabled=!P.on;
+    const flip=document.createElement('button'); flip.textContent='⇄'; flip.title=tr('flip'); flip.style.padding='2px 6px';
+    function apply(){
+      const v=parseFloat(sl.value); P.value=v; const n=P.plane.normal;
       P.plane.setFromNormalAndCoplanarPoint(n, new THREE.Vector3(ax==='x'?v:center.x, ax==='y'?v:center.y, ax==='z'?v:center.z));
     }
     cb.onchange=()=>{ P.on=cb.checked; sl.disabled=!cb.checked; apply(); refreshClip(); };
@@ -324,13 +379,13 @@ function selectMesh(m){
   m.material.emissive.setHex(0x445566); m.material.emissiveIntensity=1.0;
   const c=m.userData.cfg;
   const vol = (c.volume_mm3_measured!=null) ? (Math.round(c.volume_mm3_measured).toLocaleString()+' mm³') :
-              (c.surface_area_mm2!=null ? ('表面積 '+Math.round(c.surface_area_mm2).toLocaleString()+' mm²') : '—');
+              (c.surface_area_mm2!=null ? (tr('area')+' '+Math.round(c.surface_area_mm2).toLocaleString()+' mm²') : '—');
   let ref='';
-  if(c.reference_range_mm3){ ref=`<div class="k">参照 ${c.reference_range_mm3[0]}–${c.reference_range_mm3[1]} mm³（差 ${c.pct_diff_vs_reference>0?'+':''}${c.pct_diff_vs_reference}%）</div>`; }
+  if(c.reference_range_mm3){ ref=`<div class="k">${tr('ref')} ${c.reference_range_mm3[0]}–${c.reference_range_mm3[1]} mm³ (${tr('diff')} ${c.pct_diff_vs_reference>0?'+':''}${c.pct_diff_vs_reference}%)</div>`; }
   const info=document.getElementById('info'); info.style.display='block';
-  info.innerHTML=`<div class="t">${c.name_en}</div><div class="ja">${c.name_ja}</div>`+
-    `<div class="k">分類: ${CATLABEL[c.category]||c.category}</div>`+
-    `<div>体積: ${vol}</div>`+ref;
+  info.innerHTML=`<div class="t">${structName(c)}</div><div class="ja">${structAlt(c)}</div>`+
+    `<div class="k">${tr('category')}: ${catLabel(c.category)}</div>`+
+    `<div>${tr('volume')}: ${vol}</div>`+ref;
 }
 function clearSelect(){ if(selected){ selected.material.emissive.setHex(0x000000); selected=null; } document.getElementById('info').style.display='none'; }
 
@@ -339,6 +394,7 @@ document.getElementById('btnXray').onclick=()=>{
   ['Cortex_L','Cortex_R'].forEach(n=>{ if(meshes[n]){ meshes[n].material.opacity=0.15; const r=document.querySelectorAll('#tree .row'); } });
 };
 document.getElementById('btnReset').onclick=()=>setView('front');
+document.getElementById('btnLang').onclick=()=>{ LANG = (LANG==='ja') ? 'en' : 'ja'; applyI18n(); };
 document.getElementById('cbCaps').onchange=e=>{ capsEnabled=e.target.checked; buildCaps(activePlanes()); };
 document.getElementById('cbGrid').onchange=e=>{ if(grid) grid.visible=e.target.checked; };
 document.getElementById('cbLabels').onchange=e=>{ if(labelR){labelR.visible=labelL.visible=e.target.checked;} };
@@ -356,7 +412,7 @@ function updateHud(){
   const nStruct=Object.keys(meshes).length;
   const sz=bbox.getSize(new THREE.Vector3());
   document.getElementById('hud').textContent=
-    `構造 ${nStruct} / 寸法 L-R ${sz.x.toFixed(0)}mm · A-P ${sz.y.toFixed(0)}mm · S-I ${sz.z.toFixed(0)}mm`;
+    `${tr('hudStruct')} ${nStruct} / ${tr('hudDims')} L-R ${sz.x.toFixed(0)}mm · A-P ${sz.y.toFixed(0)}mm · S-I ${sz.z.toFixed(0)}mm`;
 }
 
 addEventListener('resize', ()=>{ camera.aspect=view.clientWidth/view.clientHeight; camera.updateProjectionMatrix(); renderer.setSize(view.clientWidth,view.clientHeight); });

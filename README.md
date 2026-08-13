@@ -1,78 +1,80 @@
-# 脳3Dモデル / Brain 3D Model
+# Brain 3D Model
 
-解剖学的に正確な脳の3Dモデルと、ブラウザで閲覧できるインタラクティブビューア。
-研究・教育用途。公開標準脳テンプレート／アトラス（fsaverage）から再構成。
+**English** | [日本語](README.ja.md)
 
-> ⚠️ **これは特定個人の脳ではなく「平均的な参照脳」です。診断・手術計画・定量計測には使用できません。**（→「既知の制限」）
+An anatomically accurate 3D model of the brain plus an interactive in-browser viewer.
+For research and education. Reconstructed from a public standard-brain template/atlas (fsaverage).
 
-25構造（大脳皮質左右・皮質下7対・小脳左右・脳幹・腹側間脳左右・脳室系）を**個別メッシュ**として単一 GLB に収録。総面数 269,936 / 6.85 MB。ビューアは回転・断面（キャップ塗りつぶし付き）・構造選択・体積表示などに対応。
+> ⚠️ **This is an "average reference brain," not any individual's brain. It cannot be used for diagnosis, surgical planning, or quantitative measurement.** (see "Known limitations")
+
+25 structures (cerebral cortex L/R, 7 subcortical pairs, cerebellum L/R, brainstem, ventral diencephalon L/R, ventricular system) are stored as **individual meshes** in a single GLB. Total 269,936 faces / 6.85 MB. The viewer supports rotation, cross-sections (with filled caps), structure selection, volume display, and a JA/EN language toggle.
 
 ---
 
-## 1. 再現手順（コピペ実行可）
+## 1. Reproduction steps (copy-paste runnable)
 
-前提: macOS/Linux、[uv](https://docs.astral.sh/uv/)（`brew install uv` など）。ネットワーク接続必須。
+Prerequisites: macOS/Linux, [uv](https://docs.astral.sh/uv/) (e.g. `brew install uv`). Network connection required.
 
 ```bash
-# 取得（このリポジトリの brain_model/ に入る）
+# enter this repository's project folder
 cd brain_model
 
-# Python 3.12 の隔離環境を作成（システム Python は変更しない）
+# create an isolated Python 3.12 environment (system Python is left untouched)
 uv venv --python 3.12 .venv
 uv pip install --python .venv/bin/python -r requirements.txt
 
-# データ取得〜GLB生成（fsaverage を自動ダウンロード）
-#   --include all  : 全25構造
-#   --include minimal : 皮質+視床+海馬のみ（動作確認用）
+# fetch data -> build GLB (downloads fsaverage automatically)
+#   --include all      : all 25 structures
+#   --include minimal  : cortex + thalamus + hippocampus only (smoke test)
 .venv/bin/python build_brain_mesh.py --include all --out brain.glb
 
-# ビューアを起動（file:// では GLB 読込が CORS で失敗するため HTTP 配信する）
+# start the viewer (file:// fails to load the GLB due to CORS, so serve over HTTP)
 .venv/bin/python -m http.server 8731
-#   → ブラウザで  http://localhost:8731/viewer.html  を開く
+#   -> open  http://localhost:8731/viewer.html  in a browser
 ```
 
-**所要時間の目安**（10コア/24GB, Apple Silicon 実測）
-- 環境構築（uv + 依存インストール）: 約1–2分
-- fsaverage 初回ダウンロード: 約20–60秒（回線依存、約240MB）
-- `build_brain_mesh.py --include all`: 約1–2分
-- 合計: 初回 約5分程度
+**Time estimate** (measured on 10-core / 24 GB, Apple Silicon)
+- Environment setup (uv + install deps): ~1–2 min
+- fsaverage first download: ~20–60 s (network-dependent, ~240 MB)
+- `build_brain_mesh.py --include all`: ~1–2 min
+- Total first run: ~5 min
 
-**ディスク使用量の目安**
-- `.venv`（依存一式）: 約1.5 GB
-- fsaverage データ（`~/mne_data`）: 約250 MB／Harvard-Oxford 検証用（`~/nilearn_data`、Step1 検証時のみ）: 約1 GB
-- 生成物（`brain.glb` ほか）: 約10 MB
+**Disk usage estimate**
+- `.venv` (all dependencies): ~1.5 GB
+- fsaverage data (`~/mne_data`): ~250 MB / Harvard-Oxford (`~/nilearn_data`, only for Step 1 verification): ~1 GB
+- Generated outputs (`brain.glb` etc.): ~10 MB
 
-## 2. データ出典とライセンス
+## 2. Data sources and license
 
-| 用途 | データ | 空間 | 取得 |
+| Use | Data | Space | Fetch |
 |---|---|---|---|
-| 皮質表面 | fsaverage `surf/{lh,rh}.pial` | FreeSurfer surface RAS (tkrRAS) | `mne.datasets.fetch_fsaverage()` |
-| 深部構造 | fsaverage `mri/aseg.mgz`（FreeSurfer aseg セグメンテーション） | 同上（`vox2ras-tkr` で表面と一致） | 同上 |
+| Cortical surface | fsaverage `surf/{lh,rh}.pial` | FreeSurfer surface RAS (tkrRAS) | `mne.datasets.fetch_fsaverage()` |
+| Deep structures | fsaverage `mri/aseg.mgz` (FreeSurfer aseg segmentation) | same (matched to surface via `vox2ras-tkr`) | same |
 
-皮質表面と深部を**同一 fsaverage subject** から取得しているため、両者は追加の空間登録なしに整合します（座標系 tkrRAS、`x>0`＝被験者の右）。
+Because the cortical surface and the deep structures come from the **same fsaverage subject**, they align without any additional spatial registration (coordinate space tkrRAS, `x>0` = subject's right).
 
-**出典文献**
-- fsaverage / 皮質表面法: Fischl B, Sereno MI, Tootell RBH, Dale AM. *Human Brain Mapping* 8:272–284 (1999).
-- aseg（皮質下自動セグメンテーション法）: Fischl B, et al. "Whole brain segmentation." *Neuron* 33:341–355 (2002).
-- Desikan-Killiany アトラス（皮質区分、本モデルでは**未収録**・将来拡張候補）: Desikan RS, et al. *NeuroImage* 31:968–980 (2006).
-- ICBM152 2009c（Step1 で空間検証に使用、最終モデルには**不採用**）: Fonov V, et al. *NeuroImage* (2011).
-- Harvard-Oxford（Step1 で検討、**不採用**）: FSL / Harvard Center for Morphometric Analysis.
+**Source references**
+- fsaverage / cortical surface method: Fischl B, Sereno MI, Tootell RBH, Dale AM. *Human Brain Mapping* 8:272–284 (1999).
+- aseg (automated subcortical segmentation): Fischl B, et al. "Whole brain segmentation." *Neuron* 33:341–355 (2002).
+- Desikan-Killiany atlas (cortical parcellation; **not included** here, a future extension): Desikan RS, et al. *NeuroImage* 31:968–980 (2006).
+- ICBM152 2009c (used for spatial verification in Step 1, **not adopted** in the final model): Fonov V, et al. *NeuroImage* (2011).
+- Harvard-Oxford (considered in Step 1, **not adopted**): FSL / Harvard Center for Morphometric Analysis.
 
-**利用・再配布条件（重要）**
-- fsaverage / aseg は **FreeSurfer** の一部として配布され、[FreeSurfer Software License](https://surfer.nmr.mgh.harvard.edu/registration.html) に従います。**研究目的で利用・再配布可**。臨床診断用途は不可。
-- 本モデル（GLB／メッシュ）は fsaverage aseg・pial の**派生物**です。公開・再配布する場合は次の帰属表示を必ず含めてください。
-  - 「Derived from FreeSurfer's fsaverage subject (aseg segmentation and pial surfaces). Fischl et al., Neuron 2002; Fischl et al., Human Brain Mapping 1999.」
-- **AAL アトラスは使用していません**（非商用・帰属制約があり公開時に問題となるため）。
-- Three.js（ビューア、CDN 読込）は MIT ライセンス。
+**Usage / redistribution terms (important)**
+- fsaverage / aseg are distributed as part of **FreeSurfer** and follow the [FreeSurfer Software License](https://surfer.nmr.mgh.harvard.edu/registration.html). **Free to use and redistribute for research purposes.** Not for clinical/diagnostic use.
+- This model (GLB / meshes) is a **derivative** of fsaverage aseg and pial. If you publish or redistribute it, you must include the following attribution:
+  - "Derived from FreeSurfer's fsaverage subject (aseg segmentation and pial surfaces). Fischl et al., Neuron 2002; Fischl et al., Human Brain Mapping 1999."
+- **The AAL atlas is not used** (its non-commercial / attribution constraints would be problematic for publication).
+- Three.js (viewer, loaded via CDN) is MIT-licensed.
 
-## 3. 収録構造一覧
+## 3. Included structures
 
-ラベルIDは FreeSurfer aseg（FreeSurferColorLUT）準拠。体積は**実測（補正なし）**。文献値は成人 MRI 手動トレース研究の代表的正常範囲。差%は文献値レンジ中央値との差。
+Label IDs follow FreeSurfer aseg (FreeSurferColorLUT). Volumes are **as measured (uncorrected)**. Reference values are representative adult normal ranges from MRI manual-tracing studies. "diff %" is the difference from the midpoint of the reference range.
 
-| 構造 (EN) | 和名 | ソース/ラベルID | 面数 | 実測体積(mm³) | 文献値(mm³) | 差% |
+| Structure (EN) | JA name | Source / label ID | Faces | Measured vol (mm³) | Reference (mm³) | diff % |
 |---|---|---|---|---|---|---|
-| Cerebral Cortex (Left) | 大脳皮質（左） | lh.pial | 60,000 | (表面積 76,433mm²) | — | — |
-| Cerebral Cortex (Right) | 大脳皮質（右） | rh.pial | 60,000 | (表面積 76,361mm²) | — | — |
+| Cerebral Cortex (Left) | 大脳皮質（左） | lh.pial | 60,000 | (surface area 76,433 mm²) | — | — |
+| Cerebral Cortex (Right) | 大脳皮質（右） | rh.pial | 60,000 | (surface area 76,361 mm²) | — | — |
 | Thalamus (Left) | 視床（左） | aseg 10 | 5,000 | 8,610 | 6,000–8,000 | +23.0% |
 | Thalamus (Right) | 視床（右） | aseg 49 | 5,000 | 8,589 | 6,000–8,000 | +22.7% |
 | Caudate (Left) | 尾状核（左） | aseg 11 | 5,000 | 3,627 | 3,000–4,000 | +3.6% |
@@ -96,94 +98,96 @@ uv pip install --python .venv/bin/python -r requirements.txt
 | Lateral Ventricle (Right) | 側脳室（右） | aseg 43+44 | 12,000 | 20,176 | — | — |
 | Third Ventricle | 第三脳室 | aseg 14 | 3,244 | 1,941 | — | — |
 | Fourth Ventricle | 第四脳室 | aseg 15 | 3,752 | 2,237 | — | — |
-| **合計** |  |  | **269,936** |  |  |  |
+| **Total** |  |  | **269,936** |  |  |  |
 
-- 側脳室は側脳室本体（4/43）＋下角（5/44）を統合。小脳は皮質（8/47）＋白質（7/46）を統合。
-- 完全な機械可読データは `structures.json`（実測体積・文献値・差%・色・重心を格納）。
+- The lateral ventricle merges the body (4/43) + inferior horn (5/44). The cerebellum merges cortex (8/47) + white matter (7/46).
+- Full machine-readable data is in `structures.json` (measured volume, reference value, diff %, color, centroid).
 
-## 4. 処理パイプライン
+## 4. Processing pipeline
 
-`build_brain_mesh.py`：
-1. aseg ラベルごとに二値マスク生成
-2. ガウシアン平滑化（σ=0.5 voxel）
-3. marching cubes で等値面抽出（**閾値 0.5 固定・構造ごとに変えない**）
-4. Taubin 平滑化（収縮補正あり、5回）／連結成分クリーンアップ（最大成分の1%未満を除去）
-5. **構造別**の面数削減（下記）。`vox2ras-tkr` で表面RAS(mm)へ変換、法線付きで単一GLBへ
+`build_brain_mesh.py`:
+1. Build a binary mask per aseg label
+2. Gaussian smoothing (σ = 0.5 voxel)
+3. Isosurface via marching cubes (**level fixed at 0.5, never varied per structure**)
+4. Taubin smoothing (with shrink correction, 5 iterations) / connected-component cleanup (remove components < 1% of the largest)
+5. **Per-structure** face reduction (below). Convert to surface RAS (mm) via `vox2ras-tkr`, export a single GLB with normals
 
-面数削減は構造特性に応じて変えています（一律比率は不可）:
-- 皮質: 各半球 60,000 / 皮質下核: 5,000（自然面数がこれ未満の淡蒼球・扁桃体・側坐核は未削減）
-- 小脳: 22,000/半球（foliation 保持のため軽め）/ 脳幹: 8,000 / 腹側間脳: 6,000
-- 側脳室: 12,000/半球（下角の細部保持）/ **第三・第四脳室: 削減しない**（薄く細いため破断防止の下限確保）
+Decimation varies by structure characteristics (a uniform ratio is not acceptable):
+- Cortex: 60,000 per hemisphere / subcortical nuclei: 5,000 (pallidum, amygdala, accumbens whose natural face count is below this are left un-decimated)
+- Cerebellum: 22,000/hemisphere (light, to preserve foliation) / brainstem: 8,000 / ventral diencephalon: 6,000
+- Lateral ventricle: 12,000/hemisphere (to keep the inferior-horn detail) / **third & fourth ventricles: not decimated** (thin & narrow — a floor to prevent breakage)
 
-## 5. ビューア機能（`viewer.html`）
+## 5. Viewer features (`viewer.html`)
 
-単一HTML / Three.js r160（CDN importmap）/ GLB外部参照。
-- OrbitControls（回転・ズーム・パン）
-- 構造ツリー（分類→個別、表示トグル＋不透明度スライダー、分類一括）
-- プリセット6方向（前後左右上下、解剖学的方向・L/Rラベル付き）
-- **直交3断面クリッピング**（矢状・冠状・水平、位置スライダー＋方向反転）＋**切断面キャップ**（構造色で塗りつぶし。トグルで ON/OFF）
-- 構造クリック選択（英/和名・分類・体積mm³・文献差%を表示、ハイライト）
-- 「皮質を半透明にして深部を見る」ワンクリック
-- mmグリッド・L/Rラベル（ワールド座標固定で取り違え不能）
-- PNG書き出し（透過背景オプション）
+Single HTML / Three.js r160 (CDN importmap) / external GLB reference.
+- **JA/EN language toggle** (top-right button; switches all UI text and structure names live, preserving current state)
+- OrbitControls (rotate / zoom / pan)
+- Structure tree (category → individual, visibility toggle + opacity slider, per-category bulk toggle)
+- 6 preset views (front/back/left/right/top/bottom, anatomically correct, with L/R labels)
+- **3 orthogonal clipping sections** (sagittal / coronal / axial, position slider + direction flip) + **section caps** (filled with structure color; toggle on/off)
+- Click-to-select a structure (shows EN/JA name, category, volume mm³, diff % vs reference; highlights it)
+- One-click "make cortex translucent to see deep structures"
+- mm grid, L/R labels (anchored to world coordinates so left/right cannot be swapped)
+- PNG export (with transparent-background option)
 
-## 6. 検証結果（実測）
+## 6. Verification results (measured)
 
-- **向き**: 全構造で `x<0`＝左 / `x>0`＝右（RAS準拠、取り違えなし）
-- **左右対称性**: 対構造の体積差 ≤10%（例外: 扁桃体 12.9%＝平均脳由来のアーティファクト）
-- **スケール**: L-R 139mm / A-P 174mm / S-I 149mm（≒実寸）
-- **干渉**: 指定隣接ペアの貫入深さ ≤0.1mm（相互排他ラベルの平滑化由来の微小接触のみ）。皮質下核（尾状核・被殻・淡蒼球・側坐核）の皮質突き抜け 0%
-- **面数/サイズ**: 269,936面（目標≤300,000）/ 6.85MB（目標≤50MB）
-- **ビューア**: ヘッドレスブラウザで水平断・冠状断・矢状断すべて正しく描画、キャップ破綻なし、**約60fps**、コンソールエラーなし
+- **Orientation**: all structures `x<0` = left / `x>0` = right (RAS convention, no swap)
+- **L/R symmetry**: paired-structure volume difference ≤10% (exception: amygdala 12.9% = average-brain artifact)
+- **Scale**: L-R 139 mm / A-P 174 mm / S-I 149 mm (≈ real size)
+- **Interpenetration**: penetration depth ≤0.1 mm for the specified adjacent pairs (only tiny contact from smoothing of mutually exclusive labels). Subcortical nuclei (caudate/putamen/pallidum/accumbens) poke-through of cortex: 0%
+- **Faces / size**: 269,936 faces (target ≤300,000) / 6.85 MB (target ≤50 MB)
+- **Viewer**: axial, coronal, and sagittal sections all render correctly in a headless browser, caps intact, **~60 fps**, no console errors
 
-## 7. 既知の制限（省略不可）
+## 7. Known limitations (do not omit)
 
-1. **平均脳である**: fsaverage（約40脳を平均した FreeSurfer 標準脳）由来であり、**特定個人の脳ではありません**。個々の形状・非対称・病変は表現しません。
-2. **体積が手動計測と系統的に異なる**: 各構造の体積は手動トレース計測プロトコルと比較して**系統的に大きく**出ます（被殻 +約50%、海馬 +約40%、視床 +約23% 等／`structures.json` 参照）。これは (a) 平均脳ゆえの境界のぼけ、(b) FreeSurfer aseg と手動トレースの**境界定義プロトコルの違い**による**既知の系統差であり、エラーではありません**。体積を文献値に合わせるための補正（マスク収縮・閾値調整）は**意図的に行っていません**。→ **本モデルを体積の定量計測に使用しないでください。**
-3. **脳幹が細分されていない**: aseg の単一ラベル（ID=16）で、**中脳・橋・延髄の区別はありません**。
-4. **小脳の虫部（vermis）が独立していない**: 小脳は左右半球（皮質＋白質）を各1メッシュとし、正中の虫部を分離していません。
-5. **臨床利用不可**: 平均脳由来であり、**診断・手術計画には使用できません**。
-6. **断面キャップの制限**:
-   - キャップは各構造の閉曲面をステンシルで塗るため、**非watertight／自己交差のある構造**（一部の脳室・小脳）では切断面の縁がわずかに乱れる場合があります（実測では目立つ破綻なし）。
-   - 相互排他ラベルの平滑化で境界が最大約0.1mm重なるため、隣接構造の断面境界が極接近箇所でごく僅かに重畳し得ます。
-   - 斜め（任意方向）断面は非対応（直交3方向のみ）。
+1. **It is an average brain**: derived from fsaverage (a FreeSurfer standard brain averaging ~40 brains), so it is **not any individual's brain**. It does not represent individual shape, asymmetry, or lesions.
+2. **Volumes differ systematically from manual tracing**: each structure's volume runs **systematically larger** than a manual-tracing measurement protocol (putamen +~50%, hippocampus +~40%, thalamus +~23%, etc. / see `structures.json`). This is a **known systematic difference, not an error**, due to (a) blurred boundaries because it is an average brain, and (b) the **boundary-definition protocol difference** between FreeSurfer aseg and manual tracing. Corrections to match reference values (mask shrinking, threshold tuning) are **intentionally NOT applied**. → **Do not use this model for quantitative volumetry.**
+3. **The brainstem is not subdivided**: a single aseg label (ID=16), with **no distinction of midbrain / pons / medulla**.
+4. **The cerebellar vermis is not separated**: the cerebellum is one mesh per hemisphere (cortex + white matter); the midline vermis is not split out.
+5. **Not for clinical use**: being an average brain, it **cannot be used for diagnosis or surgical planning**.
+6. **Section-cap limitations**:
+   - Because caps fill each structure's closed surface via stencil, structures that are **non-watertight / self-intersecting** (some ventricles and the cerebellum) may show slightly ragged cut edges (no conspicuous breakage observed in practice).
+   - Smoothing of mutually exclusive labels overlaps boundaries by up to ~0.1 mm, so cut boundaries of adjacent structures may overlap very slightly where they nearly touch.
+   - Oblique (arbitrary-direction) sections are not supported (orthogonal 3 directions only).
 
-## 8. 設計上の判断と理由（判断を追えるように）
+## 8. Design decisions and rationale (so the reasoning can be traced later)
 
-- **深部構造を Harvard-Oxford ではなく fsaverage aseg に統一した理由**:
-  Step1 の検証で、(1) Harvard-Oxford には**小脳パーセレーションが無い**、(2) HO 体積空間（FSL MNI152）は**皮質表面 fsaverage とは別空間**で数mmのズレが生じる、ことが判明。一方 **aseg は皮質下・小脳・脳幹・脳室を全て含み**、しかも fsaverage の**皮質表面と同一 subject（同一 tkrRAS 空間）**にあるため、追加の空間登録なしに全構造が整合する。単一被験者 aseg（より文献値に近い）も検討したが、それでは fsaverage 表面との整合が崩れ本末転倒のため不採用とした。
-- **体積を補正しなかった理由**:
-  体積の系統差はアトラスの確率閾値の問題ではなく**境界定義プロトコルの違い**に由来する（marching cubes の等値面閾値 0.5 とは別問題）。aseg 出力をそのまま提示し、実測値・文献値・差%を `structures.json` と本README に記録することで**透明性を確保**する方針とした。補正は解剖学的形状を歪めるため行わない。
-- **座標系に tkrRAS を採用した理由**:
-  皮質表面（pial）が tkrRAS で定義され、aseg も `vox2ras-tkr` で同座標に変換できるため、両者を無変換で重ねられる。
+- **Why deep structures were unified on fsaverage aseg rather than Harvard-Oxford**:
+  Step 1 verification found that (1) Harvard-Oxford has **no cerebellar parcellation**, and (2) the HO volume space (FSL MNI152) is a **different space from the fsaverage cortical surface**, giving a few-mm misalignment. In contrast, **aseg includes all subcortical, cerebellum, brainstem, and ventricles**, and lives in the **same subject (same tkrRAS space) as the fsaverage cortical surface**, so all structures align without extra registration. A single-subject aseg (closer to literature values) was also considered but rejected because it would break alignment with the fsaverage surface — defeating the purpose.
+- **Why volumes were not corrected**:
+  The systematic volume difference is not an atlas probability-threshold issue but stems from the **boundary-definition protocol difference** (a separate matter from the marching-cubes isosurface level of 0.5). We present the aseg output as-is and record measured value, reference value, and diff % in `structures.json` and this README to **ensure transparency**. Corrections are not applied because they would distort the anatomical shape.
+- **Why tkrRAS was adopted as the coordinate system**:
+  The pial surface is defined in tkrRAS, and aseg can be converted to the same coordinates via `vox2ras-tkr`, so the two overlay without any transform.
 
-## 9. 今後の拡張候補（記録のみ・未実装）
+## 9. Future extension candidates (recorded only, not implemented)
 
-- **Desikan-Killiany による皮質34領域の区分**: fsaverage の `?h.aparc.annot`（templateflow / FreeSurfer 同梱）で皮質を領域別に色分け・ラベル保持。
-- **任意方向（斜め）の切断平面**: 現状の直交3平面に加え、自由法線のクリッピング平面。
-- **MRI断面テクスチャ表示**: 断面に T1（fsaverage `mri/T1.mgz`）のスライス画像を貼る。
-- **脳幹の細分（中脳・橋・延髄）**: FreeSurfer Brainstem Substructures（ICBM152 2009c 空間）／SUIT 等の追加アトラス（要ライセンス確認）。
-- **小脳の詳細区分・虫部分離**: SUIT アトラス。
-- **3Dプリント対応**: 各構造の watertight 化・STL 出力・最小肉厚確保。
+- **Desikan-Killiany cortical 34-region parcellation**: color/label the cortex by region using fsaverage `?h.aparc.annot` (bundled with templateflow / FreeSurfer).
+- **Arbitrary-direction (oblique) clipping plane**: in addition to the current 3 orthogonal planes, a free-normal clipping plane.
+- **MRI cross-section texture display**: paint T1 (fsaverage `mri/T1.mgz`) slice images onto the cut planes.
+- **Brainstem subdivision (midbrain / pons / medulla)**: FreeSurfer Brainstem Substructures (ICBM152 2009c space) / SUIT and other additional atlases (license check required).
+- **Detailed cerebellar parcellation / vermis separation**: SUIT atlas.
+- **3D-print support**: make each structure watertight, export STL, ensure minimum wall thickness.
 
-## 10. 成果物
+## 10. Deliverables
 
-| ファイル | 内容 |
+| File | Contents |
 |---|---|
-| `build_brain_mesh.py` | データ取得〜GLB生成の再現可能スクリプト（`--include all|minimal`） |
-| `requirements.txt` | バージョン固定 |
-| `brain.glb` | 生成された3Dモデル（25構造） |
-| `structures.json` | ラベル・英名・和名・色・実測体積・文献値・差% |
-| `viewer.html` | Webビューア（HTTP配信で開く） |
-| `viewer_stable.html` | キャップ実装前の安定版ビューア（保全用コピー） |
-| `README.md` | 本ファイル |
-| `step1_inspect.py` / `verify_aseg.py` / `interp_check.py` / `test_caps.py` | 検証スクリプト（データ空間確認・体積検証・干渉チェック・キャップ検証） |
+| `build_brain_mesh.py` | Reproducible data-fetch-to-GLB script (`--include all|minimal`) |
+| `requirements.txt` | Pinned versions |
+| `brain.glb` | The generated 3D model (25 structures) |
+| `structures.json` | Label, EN/JA name, color, measured volume, reference value, diff % |
+| `viewer.html` | Web viewer (open via HTTP; has a JA/EN toggle) |
+| `viewer_stable.html` | Stable pre-caps viewer (preservation copy) |
+| `README.md` / `README.ja.md` | This file (English) / Japanese version |
+| `step1_inspect.py` / `verify_aseg.py` / `interp_check.py` / `test_caps.py` / `test_i18n.py` | Verification scripts (data-space check, volume check, interpenetration check, cap check, i18n toggle check) |
+| `drive_viewer.py` / `drive_full.py` | Headless-browser drivers (screenshots + FPS verification) |
 
-Git: `v1.0-nocaps` タグ＝キャップ実装前の動作確認済み版（`git checkout v1.0-nocaps` で復元可）。
+Git: tag `v1.0-nocaps` = verified pre-caps version (`git checkout v1.0-nocaps` to restore); tag `v1.1-caps` = with section caps.
 
-## 参照文献 / References
+## References
 - Fischl B, Sereno MI, Tootell RBH, Dale AM. High-resolution intersubject averaging and a coordinate system for the cortical surface. *Human Brain Mapping* 8:272–284 (1999).
 - Fischl B, et al. Whole brain segmentation: automated labeling of neuroanatomical structures (aseg). *Neuron* 33:341–355 (2002).
 - Desikan RS, et al. An automated labeling system... (Desikan-Killiany). *NeuroImage* 31:968–980 (2006).
 - Fonov V, et al. Unbiased average age-appropriate atlases (ICBM152 2009c). *NeuroImage* (2011).
-- 構造の参照体積範囲は成人 MRI 手動トレース研究に基づく代表的正常範囲（`structures.json` の `reference_source` を参照）。
+- Structure reference volume ranges are representative adult normal ranges from MRI manual-tracing studies (see `reference_source` in `structures.json`).
