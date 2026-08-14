@@ -19,3 +19,7 @@ interp_out.txt
 *.png
 brain_minimal.glb
 build_minimal.py
+
+# Local portfolio helpers / screenshots (kept out of the repo)
+portfolio/
+shoot_portfolio.py

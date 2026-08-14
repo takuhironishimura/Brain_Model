@@ -178,6 +178,8 @@ Single HTML / Three.js r160 (CDN importmap) / external GLB reference.
 | `brain.glb` | The generated 3D model (25 structures) |
 | `structures.json` | Label, EN/JA name, color, measured volume, reference value, diff % |
 | `viewer.html` | Web viewer (open via HTTP; has a JA/EN toggle) |
+| `viewer_standalone.html` | **Fully self-contained single file** (Three.js + GLB + structures embedded). Opens by double-click, offline, no server. |
+| `build_standalone.py` | Builds `viewer_standalone.html` from the sources |
 | `viewer_stable.html` | Stable pre-caps viewer (preservation copy) |
 | `README.md` / `README.ja.md` | This file (English) / Japanese version |
 | `step1_inspect.py` / `verify_aseg.py` / `interp_check.py` / `test_caps.py` / `test_i18n.py` | Verification scripts (data-space check, volume check, interpenetration check, cap check, i18n toggle check) |

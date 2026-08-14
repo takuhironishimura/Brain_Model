@@ -178,6 +178,8 @@ uv pip install --python .venv/bin/python -r requirements.txt
 | `brain.glb` | 生成された3Dモデル（25構造） |
 | `structures.json` | ラベル・英名・和名・色・実測体積・文献値・差% |
 | `viewer.html` | Webビューア（HTTP配信で開く。日英切替あり） |
+| `viewer_standalone.html` | **完全自己完結の単一ファイル**（Three.js・GLB・構造データを埋込）。ダブルクリックで・オフライン・サーバ不要で動作。 |
+| `build_standalone.py` | `viewer_standalone.html` を生成するスクリプト |
 | `viewer_stable.html` | キャップ実装前の安定版ビューア（保全用コピー） |
 | `README.md` / `README.ja.md` | 英語版 / 本ファイル（日本語版） |
 | `step1_inspect.py` / `verify_aseg.py` / `interp_check.py` / `test_caps.py` / `test_i18n.py` | 検証スクリプト（データ空間確認・体積検証・干渉チェック・キャップ検証・日英切替検証） |
