@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -92,7 +92,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 // ---------------- i18n (JA / EN toggle) ----------------
-let LANG = 'ja';
+let LANG = 'en';   // default UI language (toggle button switches to 日本語)
 const T = {
   ja:{
     title:'脳3Dビューア',
@@ -244,6 +244,8 @@ function updateCapPositions(){ capQuads.forEach(pm=>orientCap(pm, pm.userData.pl
 let structures = {}, meta = {}, meshes = {}, bbox = new THREE.Box3(), center = new THREE.Vector3(), radius=150;
 
 function toColor(rgb){ return new THREE.Color(rgb[0]/255, rgb[1]/255, rgb[2]/255); }
+
+applyI18n();   // set initial UI language (incl. loading overlay) before data loads
 
 Promise.all([
   fetch('structures.json').then(r=>r.json()),
